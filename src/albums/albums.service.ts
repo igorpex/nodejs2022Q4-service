@@ -5,14 +5,15 @@ import {
 } from '@nestjs/common';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
-import { Album } from './entities/album.entity';
+// import { Album } from './entities/album.entity';
 import { v4 as uuid, validate, version } from 'uuid';
-import { db } from 'src/data/db';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AlbumsService {
-  private albums: Array<Album> = [];
-  create(createAlbumDto: CreateAlbumDto) {
+  constructor(private prisma: PrismaService) {}
+  // private albums: Array<Album> = [];
+  async create(createAlbumDto: CreateAlbumDto) {
     // return 'This action adds a new album';
     //check required fields and types
     const hasAllRequiredFields = createAlbumDto.name && createAlbumDto.year;
@@ -27,35 +28,40 @@ export class AlbumsService {
     }
 
     // create a album with random id
-    const newAlbum = {
+    const newAlbumData = {
       id: uuid(),
       ...createAlbumDto,
     };
     // console.log('newAlbum:', newAlbum);
-    db.albums.push(newAlbum);
+    // db.albums.push(newAlbum);
+    const newAlbum = await this.prisma.albums.create({
+      data: newAlbumData,
+    });
     return newAlbum;
   }
 
-  findAll() {
+  async findAll() {
     // return `This action returns all albums`;
-    return db.albums;
+    const albums = await this.prisma.albums.findMany();
+    return albums;
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     // return `This action returns a #${id} album`;
     if (!validate(id) || !(version(id) === 4)) {
       throw new BadRequestException(`albumId ${id} is invalid (not uuid)`);
     }
 
     // Check album exists
-    const album: Album = db.albums.find((album) => album['id'] === id);
+    // const album: Album = db.albums.find((album) => album['id'] === id);
+    const album = await this.prisma.albums.findUnique({ where: { id } });
     if (!album) {
       throw new NotFoundException('Album not found.');
     }
     return album;
   }
 
-  update(id: string, updateAlbumDto: UpdateAlbumDto) {
+  async update(id: string, updateAlbumDto: UpdateAlbumDto) {
     // return `This action updates a #${id} album`;
     // check uuid is valid or return error
     if (!validate(id) || !(version(id) === 4)) {
@@ -75,57 +81,39 @@ export class AlbumsService {
     }
 
     // Check album exists
-    const index: number = db.albums.findIndex((album) => album['id'] === id);
-    const album: Album = db.albums.find((album) => album['id'] === id);
+    const album = await this.prisma.albums.findUnique({ where: { id } });
     if (!album) {
-      // console.log('No album to PUT!');
-      // throw new BadRequestException('Album does not exist'); //400
-      throw new NotFoundException('Album not found.'); //404
+      throw new NotFoundException('Album not found.');
     }
 
     //create updated album
-    const updatedAlbum = {
+    const updatedAlbumData = {
       id: id,
       ...updateAlbumDto,
     };
-    db.albums[index] = updatedAlbum;
+    const updatedAlbum = await this.prisma.albums.update({
+      data: updatedAlbumData,
+      where: { id },
+    });
     return updatedAlbum;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     // return `This action removes a #${id} album`;
     // check uuid is valid or return error
     if (!validate(id) || !(version(id) === 4)) {
       throw new BadRequestException(`albumId ${id} is invalid (not uuid)`); //400
     }
-    // Check album exists
-    const album: Album = db.albums.find((album) => album['id'] === id);
-    if (!album) {
+
+    try {
+      await this.prisma.albums.delete({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      // console.log('####albums.service remove error:', error);
       throw new NotFoundException('Album not found.'); //404
     }
-
-    // Check album exists 2
-    // const index: number = db.albums.findIndex((album) => album['id'] === id);
-    // if (index === -1) {
-    //   throw new NotFoundException('Album not found.'); //404
-    // }
-
-    // Null links in related entities
-    db.tracks = db.tracks.map((track) => {
-      if (track.albumId === id) {
-        track.albumId = null;
-        return track;
-      } else {
-        return track;
-      }
-    });
-
-    // Remove from favorites
-    db.favorites.albums = db.favorites.albums.filter(
-      (albumId) => albumId !== id,
-    );
-    // Remove album itself
-    db.albums = db.albums.filter((album) => album['id'] !== id);
-    return;
   }
 }
