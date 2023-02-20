@@ -24,9 +24,20 @@ Change ports for Node (default PORT=4000) and Postgres (POSTGRES_PORT=5432) if n
 Run Docker (i.e. Docker desktop). It is required to start docker containers.
 
 ```
-docker-compose up
+docker-compose up -d -V --build
 ```
+
 It will create images and run containers with Node and Postgres.
+
+If test do not work, make migration running npm script
+
+```
+npm run prisma:migrate
+<!-- or -->
+npx prisma migrate dev --name init
+<!-- where 'init' is name of migration -->
+```
+Then start containers again with docker-compose
 
 ## Using
 Use Postman or Thunder Client to connect to API.
