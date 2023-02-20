@@ -11,20 +11,34 @@
 git clone {repository URL}
 ```
 
-## Installing NPM modules
+## Prepare .env file
 
-```
-npm install
-```
+Use .env file.
+If it is not presented, rename env.exampe file to .env file.
+Change ports for Node (default PORT=4000) and Postgres (POSTGRES_PORT=5432) if needed.
+
+
 
 ## Running application
 
+Run Docker (i.e. Docker desktop). It is required to start docker containers.
+
 ```
-npm run start
+docker-compose up
 ```
-or
+It will create images and run containers with Node and Postgres.
+
+## Using
+Use Postman or Thunder Client to connect to API.
+Use port from .env file (default 4000).
+API docs can be found in 'doc' folder. Use with Swagger (swagger.io)
+
+If you change source code, server will re-start automatically (nest starting in watch mode).
+
+To stop containers, use:
+
 ```
-npm run start:dev
+docker-compose down
 ```
 
 ## Testing
@@ -53,4 +67,3 @@ npm run lint
 npm run format
 ```
 
-API doumentation in 'doc' folder, use with Swagger (swagger.io)
