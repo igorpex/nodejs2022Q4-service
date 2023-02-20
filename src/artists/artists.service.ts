@@ -5,14 +5,15 @@ import {
 } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { Artist } from './entities/artist.entity';
 import { v4 as uuid, validate, version } from 'uuid';
-import { db } from 'src/data/db';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ArtistsService {
+  constructor(private prisma: PrismaService) {}
   // private artists: Array<Artist> = [];
-  create(createArtistDto: CreateArtistDto) {
+
+  async create(createArtistDto: CreateArtistDto) {
     // return 'This action adds a new artist';
     //check required fields and types
     const hasAllRequiredFields = createArtistDto.name && createArtistDto.grammy;
@@ -27,34 +28,35 @@ export class ArtistsService {
     }
 
     // create a artist with random id
-    const newArtist = {
+    const newArtistData = {
       id: uuid(),
       ...createArtistDto,
     };
-    db.artists.push(newArtist);
+    const newArtist = await this.prisma.artists.create({
+      data: newArtistData,
+    });
     return newArtist;
   }
 
-  findAll() {
-    // return `This action returns all artists`;
-    return db.artists;
+  async findAll() {
+    const artists = await this.prisma.artists.findMany();
+    return artists;
   }
 
-  findOne(id: string) {
-    // return `This action returns a #${id} artist`;
+  async findOne(id: string) {
     if (!validate(id) || !(version(id) === 4)) {
       throw new BadRequestException(`artistId ${id} is invalid (not uuid)`);
     }
 
     // Check artist exists
-    const artist: Artist = db.artists.find((artist) => artist['id'] === id);
+    const artist = await this.prisma.artists.findUnique({ where: { id } });
     if (!artist) {
       throw new NotFoundException('Artist not found.');
     }
     return artist;
   }
 
-  update(id: string, updateArtistDto: UpdateArtistDto) {
+  async update(id: string, updateArtistDto: UpdateArtistDto) {
     // return `This action updates a #${id} artist`;
     // check uuid is valid or return error
     if (!validate(id) || !(version(id) === 4)) {
@@ -62,7 +64,6 @@ export class ArtistsService {
     }
 
     //check required fields and types
-
     const hasCorrectTypes =
       typeof updateArtistDto.name === 'string' &&
       typeof updateArtistDto.grammy === 'boolean';
@@ -77,56 +78,40 @@ export class ArtistsService {
     }
 
     // Check artist exists
-    const index: number = db.artists.findIndex((artist) => artist['id'] === id);
-    const artist: Artist = db.artists.find((artist) => artist['id'] === id);
+    const artist = await this.prisma.artists.findUnique({ where: { id } });
     if (!artist) {
-      throw new NotFoundException('Artist not found.'); //404
+      throw new NotFoundException('Artist not found.');
     }
 
     //create updated artist
-    const updatedArtist = {
+    const updatedArtistData = {
       id: id,
       ...updateArtistDto,
     };
-    db.artists[index] = updatedArtist;
+
+    const updatedArtist = await this.prisma.artists.update({
+      data: updatedArtistData,
+      where: { id },
+    });
     return updatedArtist;
   }
 
-  remove(id: string) {
+  async remove(id: string) {
     // return `This action removes a #${id} artist`;
     // check uuid is valid or return error
     if (!validate(id) || !(version(id) === 4)) {
       throw new BadRequestException(`artistId ${id} is invalid (not uuid)`); //400
     }
-    // Check artist exists
-    const artist: Artist = db.artists.find((artist) => artist['id'] === id);
-    if (!artist) {
+    // Remove
+    try {
+      await this.prisma.artists.delete({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      // console.log('####artists.service remove error:', error);
       throw new NotFoundException('Artist not found.'); //404
     }
-
-    // Null links in related entities
-
-    db.tracks = db.tracks.map((track) => {
-      if (track.artistId === id) {
-        track.artistId = null;
-      }
-      return track;
-    });
-
-    db.albums = db.tracks.map((album) => {
-      if (album.artistId === id) {
-        album.artistId = null;
-      }
-      return album;
-    });
-
-    // Remove from favorites
-    db.favorites.artists = db.favorites.artists.filter(
-      (artistId) => artistId !== id,
-    );
-
-    // Remove artist itself
-    db.artists = db.artists.filter((artist) => artist['id'] !== id);
-    return;
   }
 }
