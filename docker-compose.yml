@@ -8,6 +8,8 @@ services:
     container_name: nodejs-2022q4-node
     ports:
       - ${PORT}:${PORT}
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
     links:
       - postgres
     depends_on:
@@ -15,7 +17,10 @@ services:
     networks:
       - user-defined
     logging:
-      driver: none
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
     volumes:
       - ./src:/usr/app/src
     restart: on-failure
