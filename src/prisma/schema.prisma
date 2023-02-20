@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id        String @id @default(uuid())
+  login     String
+  password  String
+  version   Int
+  createdAt Int
+  updatedAt Int
+}
+
+model Albums {
+  id        String      @id @default(uuid())
+  name      String
+  year      Int
+  artistId  String?
+  artist    Artists?    @relation(fields: [artistId], references: [id]) // artistId: string | null; // refers to Artist
+  tracks    Tracks[]
+  favorites Favorites[]
+}
+
+model Artists {
+  id        String      @id @default(uuid())
+  name      String
+  grammy    Boolean
+  albums    Albums[]
+  tracks    Tracks[]
+  favorites Favorites[]
+}
+
+model Tracks {
+  id        String      @id @default(uuid())
+  name      String
+  artistId  String?
+  artist    Artists?    @relation(fields: [artistId], references: [id]) // artistId: string | null; // refers to Artist
+  albumId   String? // refers to Album
+  album     Albums?     @relation(fields: [albumId], references: [id])
+  duration  Int
+  favorites Favorites[]
+}
+
+model Favorites {
+  id       String   @id @default(uuid())
+  artistId String?
+  artist   Artists? @relation(fields: [artistId], references: [id])
+  album    Albums?  @relation(fields: [albumId], references: [id])
+  albumId  String?
+  track    Tracks?  @relation(fields: [trackId], references: [id])
+  trackId  String?
+}
