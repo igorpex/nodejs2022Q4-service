@@ -11,21 +11,35 @@
 git clone {repository URL}
 ```
 
-## Installing NPM modules
+## Prepare .env file
 
-```
-npm install
-```
+Use .env file.
+If it is not presented, rename env.exampe file to .env file.
+Change ports for Node (default PORT=4000) and Postgres (POSTGRES_PORT=5432) if needed.
+
+
 
 ## Running application
 
-```
-npm start
-```
+Run Docker (i.e. Docker desktop). It is required to start docker containers.
 
-After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
-For more information about OpenAPI/Swagger please visit https://swagger.io/.
+```
+docker-compose up
+```
+It will create images and run containers with Node and Postgres.
+
+## Using
+Use Postman or Thunder Client to connect to API.
+Use port from .env file (default 4000).
+API docs can be found in 'doc' folder. Use with Swagger (swagger.io)
+
+If you change source code, server will re-start automatically (nest starting in watch mode).
+
+To stop containers, use:
+
+```
+docker-compose down
+```
 
 ## Testing
 
@@ -43,18 +57,6 @@ To run only one of all test suites
 npm run test -- <path to suite>
 ```
 
-To run all test with authorization
-
-```
-npm run test:auth
-```
-
-To run only specific test suite with authorization
-
-```
-npm run test:auth -- <path to suite>
-```
-
 ### Auto-fix and format
 
 ```
@@ -65,8 +67,3 @@ npm run lint
 npm run format
 ```
 
-### Debugging in VSCode
-
-Press <kbd>F5</kbd> to debug.
-
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging

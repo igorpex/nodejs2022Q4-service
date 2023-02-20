@@ -1,0 +1,46 @@
+version: '3.9'
+services:
+  node:
+    build: .
+    command: npm run start:dev
+    # command: npm audit fix && npm run start:dev
+    image: igorbogdanov/nodejs-2022q4-node
+    container_name: nodejs-2022q4-node
+    ports:
+      - ${PORT}:${PORT}
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - user-defined
+    logging:
+      driver: none
+    volumes:
+      - ./src:/usr/app/src
+    restart: on-failure
+  postgres:
+    build: ./database/
+    image: igorbogdanov/nodejs-2022q4-postgres
+    container_name: nodejs-2022q4-postgres
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - user-defined
+    restart: on-failure
+    volumes:
+      - ./database/db:/var/lib/postgresql/data/
+      - ./database/logs:/var/log/postgresql/
+networks:
+  user-defined:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
