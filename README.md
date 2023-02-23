@@ -18,7 +18,6 @@ If it is not presented, rename env.exampe file to .env file.
 Change ports for Node (default PORT=4000) and Postgres (POSTGRES_PORT=5432) if needed.
 
 
-
 ## Running application
 
 Run Docker (i.e. Docker desktop). It is required to start docker containers.
@@ -77,4 +76,3 @@ npm run lint
 ```
 npm run format
 ```
-
