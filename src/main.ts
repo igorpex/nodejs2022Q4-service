@@ -5,7 +5,7 @@ import 'dotenv/config';
 const PORT = process.env.PORT || 4000;
 
 BigInt.prototype['toJSON'] = function () {
-  return Number(this.toString());
+  return Number(this);
 };
 
 async function bootstrap() {
