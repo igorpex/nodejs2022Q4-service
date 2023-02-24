@@ -11,16 +11,33 @@ import { v4 as uuid, validate, version } from 'uuid';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { plainToInstance } from 'class-transformer';
 // import { Users, Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import 'dotenv/config';
+import { ConfigService } from '@nestjs/config';
+// const CRYPT_SALT = process.env.CRYPT_SALT;
 
 @Injectable()
 export class UsersService {
   // private users: Array<User> = [];
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  hidePassword(user) {
+  hidePassword(user: CreateUserDto) {
     const returnedUser = JSON.parse(JSON.stringify(user));
     delete returnedUser.password;
     return returnedUser;
+  }
+
+  async hashPassword(password) {
+    const hashed = await bcrypt.hash(
+      password,
+      // this.configService.get<string>('CRYPT_SALT'),
+      10,
+    );
+    // console.log('hashed:', hashed);
+    return hashed;
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -39,18 +56,28 @@ export class UsersService {
 
     // create a user, with random id, version and created time and data sent
     const createdAt = Date.now();
+
+    const password = await this.hashPassword(createUserDto.password);
+
     const newUser = {
       id: uuid(),
       version: 1,
       createdAt: createdAt,
       updatedAt: createdAt,
       ...createUserDto,
+      password,
     };
 
-    const user = await this.prisma.users.create({
-      data: newUser,
-    });
-    return this.hidePassword(user);
+    try {
+      const user = await this.prisma.users.create({
+        data: newUser,
+      });
+      return this.hidePassword(user);
+    } catch (error) {
+      throw new BadRequestException(
+        `user ${createUserDto.login} already exists`,
+      );
+    }
   }
 
   async findAll() {
@@ -96,12 +123,22 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found.');
     }
-
+    const validatePassword = await bcrypt.compare(
+      updateUserDto.oldPassword,
+      user.password,
+    );
     // check old password is correct
-    if (user.password !== updateUserDto.oldPassword) {
-      throw new ForbiddenException('Old passowrd is wrong.'); //403
+    // if (user.password !== updateUserDto.oldPassword) {
+    //   throw new ForbiddenException('Old password is wrong.'); //403
+    // }
+    if (!validatePassword) {
+      throw new ForbiddenException('Old password is wrong.'); //403
     }
 
+    updateUserDto.newPassword = await this.hashPassword(
+      updateUserDto.newPassword,
+    );
+    // const hashedPassword = await this.hashPassword(updateUserDto.newPassword);
     //create updated user
     const updatedUserData = {
       id: id,
