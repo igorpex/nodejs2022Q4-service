@@ -1,8 +1,16 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import 'dotenv/config';
+const PORT = process.env.PORT || 4000;
+
+BigInt.prototype['toJSON'] = function () {
+  return Number(this.toString());
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(4000);
+  app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
+  await app.listen(PORT);
 }
 bootstrap();
