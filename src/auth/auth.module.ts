@@ -10,10 +10,6 @@ import { JwtStrategy } from './strategy';
 @Module({
   imports: [
     UsersModule,
-    // JwtModule.register({
-    //   secret: 'secret',
-    //   signOptions: { expiresIn: '60s' },
-    // }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
