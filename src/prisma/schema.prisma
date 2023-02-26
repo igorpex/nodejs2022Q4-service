@@ -13,7 +13,7 @@ datasource db {
 
 model Users {
   id        String @id @default(uuid())
-  login     String
+  login     String @unique
   password  String
   version   Int
   createdAt BigInt
