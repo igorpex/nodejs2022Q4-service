@@ -14,7 +14,6 @@ import { plainToInstance } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 import { ConfigService } from '@nestjs/config';
-// const CRYPT_SALT = process.env.CRYPT_SALT;
 
 @Injectable()
 export class UsersService {
@@ -31,12 +30,7 @@ export class UsersService {
   }
 
   async hashPassword(password) {
-    const hashed = await bcrypt.hash(
-      password,
-      // this.configService.get<string>('CRYPT_SALT'),
-      10,
-    );
-    // console.log('hashed:', hashed);
+    const hashed = await bcrypt.hash(password, 10);
     return hashed;
   }
 
@@ -68,15 +62,28 @@ export class UsersService {
       password,
     };
 
-    try {
+    const checkUser = await this.prisma.users.findFirst({
+      where: {
+        login: createUserDto.login,
+      },
+    });
+
+    if (!checkUser) {
       const user = await this.prisma.users.create({
         data: newUser,
       });
       return this.hidePassword(user);
-    } catch (error) {
-      throw new BadRequestException(
-        `user ${createUserDto.login} already exists`,
-      );
+    } else {
+      try {
+        const updatedUser = await this.prisma.users.update({
+          where: { login: createUserDto.login },
+          data: newUser,
+        });
+        // console.log('updatedUser', updatedUser);
+        return this.hidePassword(updatedUser);
+      } catch (error) {
+        throw new BadRequestException(`some problem creating`);
+      }
     }
   }
 
@@ -127,10 +134,6 @@ export class UsersService {
       updateUserDto.oldPassword,
       user.password,
     );
-    // check old password is correct
-    // if (user.password !== updateUserDto.oldPassword) {
-    //   throw new ForbiddenException('Old password is wrong.'); //403
-    // }
     if (!validatePassword) {
       throw new ForbiddenException('Old password is wrong.'); //403
     }
@@ -138,8 +141,7 @@ export class UsersService {
     updateUserDto.newPassword = await this.hashPassword(
       updateUserDto.newPassword,
     );
-    // const hashedPassword = await this.hashPassword(updateUserDto.newPassword);
-    //create updated user
+
     const updatedUserData = {
       id: id,
       login: user.login,
