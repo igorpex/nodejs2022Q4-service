@@ -9,9 +9,10 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { JwtAccessAuthGuard } from './auth/guards/jwt-guard-access';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { MyloggerModule } from './mylogger/mylogger.module';
 import { MyloggerMiddleware } from './mylogger/mylogger.middleware';
+import { MyloggerExceptionsFilter } from './mylogger/logger.exception';
 
 @Module({
   imports: [
@@ -30,6 +31,10 @@ import { MyloggerMiddleware } from './mylogger/mylogger.middleware';
     {
       provide: APP_GUARD,
       useClass: JwtAccessAuthGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: MyloggerExceptionsFilter,
     },
   ],
 })
