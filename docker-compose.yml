@@ -2,7 +2,7 @@ version: '3.9'
 services:
   node:
     build: .
-    command: npm run start:dev
+    command: npm run start
     # command: npm audit fix && npm run start:dev
     image: igorbogdanov/nodejs-2022q4-node
     container_name: nodejs-2022q4-node
