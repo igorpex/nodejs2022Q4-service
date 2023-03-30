@@ -64,7 +64,8 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           file: ./Dockerfile
-          context: "{{defaultContext}}:src"
+          # context: "{{defaultContext}}:src"
+          context: .
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
           # tags: ${{ steps.meta.outputs.tags }}
           tags: registry.portal.staas.ru/nodejs2022q4-service:latest
