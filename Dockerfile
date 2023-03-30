@@ -1,5 +1,5 @@
 # FROM node:lts-alpine
-FROM node::gallium-bullseye-slim
+FROM node:gallium-bullseye-slim
 # WORKDIR /app
 WORKDIR /usr/app
 COPY package*.json ./
