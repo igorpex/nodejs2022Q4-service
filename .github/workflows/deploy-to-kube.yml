@@ -10,4 +10,5 @@ jobs:
       - uses: tale/kubectl-action@v1
         with:
           base64-kube-config: ${{ secrets.KUBECONFIG }}
+      - run: chmod 600 ~/.kube/config
       - run: kubectl rollout restart deployment nodejs --namespace myapp
