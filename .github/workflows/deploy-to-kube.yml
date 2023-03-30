@@ -1,0 +1,13 @@
+name: Kubectl Deploy Node From Registry
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tale/kubectl-action@v1
+        with:
+          base64-kube-config: ${{ secrets.KUBECONFIG }}
+      - run: kubectl rollout restart deployment nodejs --namespace myapp
