@@ -67,12 +67,8 @@ jobs:
           # context: "{{defaultContext}}:src"
           context: .
           push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
-          # tags: ${{ steps.meta.outputs.tags }}
-          tags: registry.portal.staas.ru/nodejs2022q4-service:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          # tags: registry.portal.staas.ru/nodejs2022q4-service:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # Logout from Docker registry
-      # - name: Logout from Docker registry
-      #   run: docker logout ${{ env.REGISTRY }}
