@@ -10,11 +10,11 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: registry.portal.staas.ru
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  # IMAGE_NAME: ${{ github.repository }}
   # TEST_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
   # LATEST_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-  TEST_TAG: ${{ env.REGISTRY }}/igorpex/app:test
-  LATEST_TAG: ${{ env.REGISTRY }}/igorpex/app:latest
+  TEST_TAG: registry.portal.staas.ru/igorpex/app:test
+  LATEST_TAG: registry.portal.staas.ru/igorpex/app:latest
 
 jobs:
   docker:
