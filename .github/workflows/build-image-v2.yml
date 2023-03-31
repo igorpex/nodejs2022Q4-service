@@ -13,8 +13,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   # TEST_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
   # LATEST_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-  TEST_TAG: ${{ env.REGISTRY }/igorpex/app:test
-  LATEST_TAG: ${{ env.REGISTRY }/igorpex/app:latest
+  TEST_TAG: ${{ env.REGISTRY }}/igorpex/app:test
+  LATEST_TAG: ${{ env.REGISTRY }}/igorpex/app:latest
 
 jobs:
   docker:
