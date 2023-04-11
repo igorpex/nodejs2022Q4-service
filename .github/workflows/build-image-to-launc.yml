@@ -1,46 +1,70 @@
-name: CI-with-test-to-Launc
-# on:
-#   push:
-#     branches:
-#       - "main"
+name: Docker Image Publish to Launc
 on:
   workflow_dispatch:
 
 env:
+  # Use docker.io for Docker Hub if empty
   REGISTRY: registry.launc.ru
-  TEST_TAG: registry.launc.ru/igorpex/nodejs2022q4-service:test
-  LATEST_TAG: registry.launc.ru/igorpex/nodejs2022q4-service:latest
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 #v2.6.0
+
+      # Workaround: https://github.com/docker/build-push-action/issues/461
+      # uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
+      #should be solved in v4 https://github.com/XanderXAJ/docker-miniupnpc/commit/876fa0e19c23313869bc9ff2aa54342ae9d400a3
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
           logout: true
-      - name: Build and export to Docker
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v4
         with:
+          file: ./Dockerfile
+          # context: "{{defaultContext}}:src"
           context: .
-          load: true
-          tags: ${{ env.TEST_TAG }}
-      - name: Test
-        run: |
-          docker run --rm ${{ env.TEST_TAG }}
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ env.LATEST_TAG }}
+          push: ${{ github.event_name != 'pull_request' }} # Don't push on PR
+          # tags: ${{ steps.meta.outputs.tags }}
+          tags: registry.launc.ru/igorpex/nodejs2022q4-service:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
